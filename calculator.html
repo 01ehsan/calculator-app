@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ماشین‌حساب</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#26241e">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Vazirmatn:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; }
+
+  :root {
+    --page-bg: #14130f;
+    --calc-bg: #26241e;
+    --brand-label: #6f6c60;
+    --display-bg: #17150f;
+    --display-border: #35322a;
+    --expr-color: #9a9689;
+    --result-color: #ffd684;
+    --num-bg: #f4f0e6;
+    --num-text: #1a1712;
+    --op-bg: #d9713f;
+    --op-text: #fff6ef;
+    --func-bg: #48453a;
+    --func-text: #f0ede2;
+    --eq-bg: #f0b555;
+    --eq-text: #1a1206;
+    --accent: #d9a344;
+  }
+
+  [data-theme="light"] {
+    --page-bg: #e9e3d4;
+    --calc-bg: #f7f2e6;
+    --brand-label: #9b9483;
+    --display-bg: #ffffff;
+    --display-border: #ddd5c0;
+    --expr-color: #a19a86;
+    --result-color: #b3651f;
+    --num-bg: #ffffff;
+    --num-text: #2a2620;
+    --op-bg: #c1633c;
+    --op-text: #fff6ef;
+    --func-bg: #e3dcc9;
+    --func-text: #3a3527;
+    --eq-bg: #d9a344;
+    --eq-text: #241b06;
+    --accent: #c1633c;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--page-bg);
+    font-family: 'Vazirmatn', sans-serif;
+    padding: 24px;
+    transition: background 0.2s ease;
+  }
+
+  .calc {
+    width: 320px;
+    background: var(--calc-bg);
+    border-radius: 22px;
+    padding: 20px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: background 0.2s ease;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 6px 14px;
+  }
+
+  .brand-row .label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--brand-label);
+    text-transform: uppercase;
+  }
+
+  .theme-toggle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--display-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .theme-toggle svg {
+    width: 15px;
+    height: 15px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .display {
+    background: var(--display-bg);
+    border-radius: 14px;
+    padding: 22px 18px 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--display-border);
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .display::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.35;
+  }
+
+  .expr {
+    direction: ltr;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--expr-color);
+    min-height: 18px;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+
+  .result {
+    direction: ltr;
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--result-color);
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+
+  .pad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  button {
+    border: none;
+    border-radius: 12px;
+    height: 60px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 21px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.06s ease, filter 0.15s ease, background 0.2s ease, color 0.2s ease;
+    color: var(--num-text);
+    background: var(--num-bg);
+  }
+
+  button:active { transform: scale(0.94); }
+
+  button.op {
+    background: var(--op-bg);
+    color: var(--op-text);
+    font-weight: 700;
+  }
+
+  button.func {
+    background: var(--func-bg);
+    color: var(--func-text);
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  button.eq {
+    background: var(--eq-bg);
+    color: var(--eq-text);
+    font-weight: 700;
+  }
+
+  button.zero { grid-column: span 2; }
+
+  button:hover { filter: brightness(1.07); }
+
+  @media (max-width: 360px) {
+    .calc { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="calc">
+  <div class="brand-row">
+    <span class="label">calc / 01</span>
+    <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم" title="تغییر تم">
+      <svg id="themeIcon" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="display">
+    <div class="expr" id="expr">&nbsp;</div>
+    <div class="result" id="result">0</div>
+  </div>
+
+  <div class="pad">
+    <button class="func" data-action="clear">AC</button>
+    <button class="func" data-action="backspace">⌫</button>
+    <button class="func" data-action="percent">%</button>
+    <button class="op" data-op="/">÷</button>
+
+    <button data-num="7">7</button>
+    <button data-num="8">8</button>
+    <button data-num="9">9</button>
+    <button class="op" data-op="*">×</button>
+
+    <button data-num="4">4</button>
+    <button data-num="5">5</button>
+    <button data-num="6">6</button>
+    <button class="op" data-op="-">−</button>
+
+    <button data-num="1">1</button>
+    <button data-num="2">2</button>
+    <button data-num="3">3</button>
+    <button class="op" data-op="+">+</button>
+
+    <button class="zero" data-num="0">0</button>
+    <button data-num=".">.</button>
+    <button class="eq" data-action="equals">=</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  const exprEl = document.getElementById('expr');
+  const resultEl = document.getElementById('result');
+
+  let current = '0';
+  let previous = null;
+  let operator = null;
+  let justEvaluated = false;
+
+  const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+
+  function formatNum(n) {
+    if (!isFinite(n)) return 'خطا';
+    const rounded = Math.round(n * 1e10) / 1e10;
+    return rounded.toString();
+  }
+
+  function updateDisplay() {
+    resultEl.textContent = current;
+    if (operator && previous !== null) {
+      exprEl.textContent = `${previous} ${opSymbol[operator]}`;
+    } else {
+      exprEl.textContent = '\u00A0';
+    }
+  }
+
+  function inputDigit(d) {
+    if (justEvaluated) {
+      current = d === '.' ? '0.' : d;
+      justEvaluated = false;
+      updateDisplay();
+      return;
+    }
+    if (d === '.') {
+      if (current.includes('.')) return;
+      current = current + '.';
+    } else {
+      current = current === '0' ? d : current + d;
+    }
+    updateDisplay();
+  }
+
+  function chooseOperator(op) {
+    if (operator && previous !== null && !justEvaluated) {
+      compute();
+    }
+    previous = current;
+    operator = op;
+    current = '0';
+    justEvaluated = false;
+    updateDisplay();
+  }
+
+  function compute() {
+    if (operator === null || previous === null) return;
+    const a = parseFloat(previous);
+    const b = parseFloat(current);
+    let r;
+    switch (operator) {
+      case '+': r = a + b; break;
+      case '-': r = a - b; break;
+      case '*': r = a * b; break;
+      case '/': r = b === 0 ? NaN : a / b; break;
+    }
+    current = formatNum(r);
+    operator = null;
+    previous = null;
+    justEvaluated = true;
+    updateDisplay();
+  }
+
+  function clearAll() {
+    current = '0';
+    previous = null;
+    operator = null;
+    justEvaluated = false;
+    updateDisplay();
+  }
+
+  function backspace() {
+    if (justEvaluated) { clearAll(); return; }
+    current = current.length > 1 ? current.slice(0, -1) : '0';
+    updateDisplay();
+  }
+
+  function percent() {
+    current = formatNum(parseFloat(current) / 100);
+    updateDisplay();
+  }
+
+  document.querySelectorAll('[data-num]').forEach(btn => {
+    btn.addEventListener('click', () => inputDigit(btn.dataset.num));
+  });
+
+  document.querySelectorAll('[data-op]').forEach(btn => {
+    btn.addEventListener('click', () => chooseOperator(btn.dataset.op));
+  });
+
+  document.querySelector('[data-action="clear"]').addEventListener('click', clearAll);
+  document.querySelector('[data-action="backspace"]').addEventListener('click', backspace);
+  document.querySelector('[data-action="percent"]').addEventListener('click', percent);
+  document.querySelector('[data-action="equals"]').addEventListener('click', compute);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key >= '0' && e.key <= '9') inputDigit(e.key);
+    else if (e.key === '.') inputDigit('.');
+    else if (['+', '-', '*', '/'].includes(e.key)) chooseOperator(e.key);
+    else if (e.key === 'Enter' || e.key === '=') { e.preventDefault(); compute(); }
+    else if (e.key === 'Backspace') backspace();
+    else if (e.key === 'Escape') clearAll();
+    else if (e.key === '%') percent();
+  });
+
+  updateDisplay();
+
+  const sunPath = '<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>';
+  const moonPath = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+
+  function applyTheme(theme) {
+    if (theme === 'light') {
+      root.setAttribute('data-theme', 'light');
+      themeIcon.innerHTML = sunPath;
+    } else {
+      root.removeAttribute('data-theme');
+      themeIcon.innerHTML = moonPath;
+    }
+    localStorage.setItem('calc-theme', theme);
+  }
+
+  const savedTheme = localStorage.getItem('calc-theme') || 'dark';
+  applyTheme(savedTheme);
+
+  themeBtn.addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+    applyTheme(next);
+  });
+
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+</script>
+
+</body>
+</html>

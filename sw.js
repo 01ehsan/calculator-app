@@ -1,4 +1,4 @@
-const CACHE_NAME = 'calc-cache-v3';
+const CACHE_NAME = 'calc-cache-v4';
 const FILES = [
   './calculator.html',
   './manifest.json',
@@ -23,6 +23,17 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate' || event.request.url.endsWith('.html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, res.clone()));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request))
   );
